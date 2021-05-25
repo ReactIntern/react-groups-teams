@@ -6,6 +6,7 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { iconClass } from './MyTeams';
 import { GroupDisplay } from './GroupDisplay';
 import { Group, PlannerPlan } from '@microsoft/microsoft-graph-types';
+import { PlannerFunction } from './PlannerFunction';
 
 export interface IGraphConsumerProps {
   context: WebPartContext;
@@ -29,10 +30,16 @@ export interface IGraphConsumerState {
 export default class MicrosoftGroups extends React.Component<IGraphConsumerProps, IGraphConsumerState> {
   private graphClient: MSGraphClient = null;
   public Tenant = this.props.context.pageContext.web.absoluteUrl.split('.')[0].split('//')[1];
+  private _PlannerFunction: PlannerFunction;
+  //this._PlannerFunction = new PlannerFunction(Tenant, graphClient)
+  protected onInit(): Promise<void> {
+    this._PlannerFunction = new PlannerFunction(this.Tenant, this.graphClient);
+    return Promise.resolve();
+  }
 
   constructor(props) {
     super(props);
-    this.GetPlanner = this.GetPlanner.bind(this);
+    //this.GetPlanner = this.GetPlanner.bind(this);
     this.GetGroups = this.GetGroups.bind(this);
     this.state = {
       AllGroups: [],
@@ -91,7 +98,7 @@ export default class MicrosoftGroups extends React.Component<IGraphConsumerProps
     this.setState({ isOpen: true, MoreDetails: array, Name: GroupInfo.Name, Description: GroupInfo.Description });
   }
 
-  public async GetPlanner(groupId: string): Promise<string> {
+  /*public async GetPlanner(groupId: string): Promise<string> {
     const plans = await this.graphClient
       .api(`/groups/${groupId}/planner/plans`)
       .get();
@@ -107,7 +114,7 @@ export default class MicrosoftGroups extends React.Component<IGraphConsumerProps
 
       return `https://tasks.office.com/${this.Tenant}.com/EN-US/Home/Planner#/plantaskboard?groupId=${groupId}&planId=${PlanID}`;
     }
-  }
+  }*/
 
   public async GetGroups() {
     const allGroupsArray: GroupDisplay[] = [];
@@ -133,7 +140,7 @@ export default class MicrosoftGroups extends React.Component<IGraphConsumerProps
         const isUserMember = joinedGroups.value
           .find((myGroup: Group) => { return myGroup.id === group.id; }) !== undefined;
 
-        const planner = await this.GetPlanner(group.id);
+        const planner = await this._PlannerFunction.GetPlanner(group.id);//this.GetPlanner(group.id);
 
         allGroupsArray.push({
           Name: group.displayName,

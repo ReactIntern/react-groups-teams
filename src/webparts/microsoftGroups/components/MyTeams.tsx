@@ -6,6 +6,7 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { mergeStyles } from 'office-ui-fabric-react/lib/Styling';
 import { Group, Team, PlannerPlan } from '@microsoft/microsoft-graph-types';
 import { TeamDisplay } from './TeamDisplay';
+import { PlannerFunction } from './PlannerFunction';
 
 export const iconClass = mergeStyles({
   fontSize: 32,
@@ -33,6 +34,12 @@ export interface IMyTeamsState {
 export default class MyTeams extends React.Component<IMyTeamsProps, IMyTeamsState> {
   public Tenant = this.props.context.pageContext.web.absoluteUrl.split('.')[0].split('//')[1];
   private graphClient: MSGraphClient = null;
+  private _PlannerFunction: PlannerFunction;
+  //this._PlannerFunction = new PlannerFunction(Tenant, graphClient)
+  protected onInit(): Promise<void> {
+    this._PlannerFunction = new PlannerFunction(this.Tenant, this.graphClient);
+    return Promise.resolve();
+  }
 
   constructor(props) {
     super(props);
@@ -58,7 +65,7 @@ export default class MyTeams extends React.Component<IMyTeamsProps, IMyTeamsStat
     });
   }
 
-  public async GetPlanner(groupId: string): Promise<string> {
+  /*public async GetPlanner(groupId: string): Promise<string> {
     const plans = await this.graphClient
       .api(`/groups/${groupId}/planner/plans`)
       .get();
@@ -74,7 +81,7 @@ export default class MyTeams extends React.Component<IMyTeamsProps, IMyTeamsStat
 
       return `https://tasks.office.com/${this.Tenant}.com/EN-US/Home/Planner#/plantaskboard?groupId=${groupId}&planId=${PlanID}`;
     }
-  }
+  }*/
 
   public async GetTeamsURL(teamId: string): Promise<string> {
     var team: Team = await this.graphClient
@@ -102,7 +109,7 @@ export default class MyTeams extends React.Component<IMyTeamsProps, IMyTeamsStat
       const myTeamsArray: TeamDisplay[] = [];
       await Promise.all(myTeams.value.map(async (team: Team) => {
         const mail = await this.GetMail(team.id);
-        const planner = await this.GetPlanner(team.id);
+        const planner = await this._PlannerFunction.GetPlanner(team.id);//this.GetPlanner(team.id);
         const teamUrl = await this.GetTeamsURL(team.id);
 
         const teamDisplay: TeamDisplay = {
